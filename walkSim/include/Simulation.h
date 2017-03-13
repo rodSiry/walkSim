@@ -11,7 +11,6 @@ class Simulation
         bool CheckFall();
 	void Draw();
         void ChngTarget(double* v);
-	btVector3 GetPos();
 	void ComputeServos();
        	float GetFitness();
 	void AddBody(btRigidBody* b);
@@ -19,7 +18,6 @@ class Simulation
         virtual ~Simulation();
     protected:
 	double scal;
-	btVector3 p;
 	double fit;
         DebugDrawer deb;
         btBroadphaseInterface* broadphase;

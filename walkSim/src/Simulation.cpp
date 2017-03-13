@@ -9,14 +9,8 @@ bool Simulation::CheckFall()
 		return true;
 	else
 		return false;
-}
-btVector3 Simulation::GetPos()
-{
-	btVector3 p;
-	p=bodies[1]->getCenterOfMassPosition();
-	return p;
-}
-Simulation::Simulation():p(btVector3(0.,0.,0.))
+}	
+Simulation::Simulation()
 {
 	broadphase = new btDbvtBroadphase();
 	collisionConfiguration = new btDefaultCollisionConfiguration();
@@ -29,7 +23,6 @@ Simulation::Simulation():p(btVector3(0.,0.,0.))
 	groundShape = new btStaticPlaneShape(btVector3(0, 1, 0), 1);
 	btDefaultMotionState* groundMotionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, -1, 0)));
 	btRigidBody::btRigidBodyConstructionInfo groundRigidBodyCI(0, groundMotionState, groundShape, btVector3(0, 0, 0));
-	groundRigidBodyCI.m_friction=0.7;
 	btRigidBody* groundRigidBody = new btRigidBody(groundRigidBodyCI);
 	AddBody(groundRigidBody);
 	/*
@@ -41,14 +34,13 @@ Simulation::Simulation():p(btVector3(0.,0.,0.))
 	   btRigidBody::btRigidBodyConstructionInfo fallRigidBodyCI(mass, fallMotionState, fallShape, fallInertia);
 	   btRigidBody* fallRigidBody = new btRigidBody(fallRigidBodyCI);
 	   AddBody(fallRigidBody);*/
-	float up=0.f;
-	AddParr(5., 0.5, 1., 0.5, btVector3(0.,3.75+up,0.));
-	AddParr(2., 0.5, 0.5, 0.5, btVector3(1.,3.25+up,0.));
-	AddParr(2., 0.5, 0.5, 0.5, btVector3(-1.,3.25+up,0.));
-	AddParr(2., 0.25, 1., 0.25, btVector3(1.,2.5+up,0.75));
-	AddParr(2., 0.25, 1., 0.25, btVector3(-1.,2.5+up,0.75));
-	AddParr(5., 0.25, 1., 0.25, btVector3(1.5,1.+up,0.75));
-	AddParr(5., 0.25, 1., 0.25, btVector3(-1.5,1.+up,0.75));
+	AddParr(1., 0.5, 1., 0.5, btVector3(0.,5.5,0.));
+	AddParr(0.5, 0.5, 0.5, 0.5, btVector3(1.,5.,0.));
+	AddParr(0.5, 0.5, 0.5, 0.5, btVector3(-1.,5.,0.));
+	AddParr(0.5, 0.25, 1., 0.25, btVector3(1.,4.25,0.75));
+	AddParr(0.5, 0.25, 1., 0.25, btVector3(-1.,4.25,0.75));
+	AddParr(0.5, 0.25, 1., 0.25, btVector3(1.5,2.75,0.75));
+	AddParr(0.5, 0.25, 1., 0.25, btVector3(-1.5,2.75,0.75));
 	values.push_back(15.f);
 	values.push_back(-15.f);
 	values.push_back(-45.f);
@@ -96,15 +88,11 @@ void Simulation::AddParr(float mass, float x, float y, float z, btVector3 p)
 void Simulation::Draw()
 {
 	btTransform t;
-//	if(rand()%10==0)
-		//bodies[1]->setLinearVelocity(btVector3(0.,3.,0.));
 	bodies[1]->getMotionState()->getWorldTransform(t);
 	btVector3 v=(t*btVector3(0.f,1.f,0.f)).normalize();
-	btVector3 pP=p;
-	p=bodies[1]->getCenterOfMassPosition();
 	double pScal=scal;
 	scal=v.dot(btVector3(0.f, 1.f, 0.f));
-	fit=(scal-pScal)+(p.getY()-pP.getY());
+	fit=10.f*(scal-0.9f);
 	dynamicsWorld->stepSimulation(1 / 60.f, 10);
 	deb.setDebugMode(btIDebugDraw::DBG_DrawWireframe);
 	dynamicsWorld->debugDrawWorld();

@@ -81,8 +81,7 @@ int main(int argc, char *argv[]) {
 		glFrustum(-1.f,  1.f,  -1.f, 1.f,  1.f,  100.f);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		btVector3 pos=world->GetPos();
-		gluLookAt(10.,5.,10.,pos.getX(),pos.getY(),pos.getZ(),0.,1.,0.);
+		gluLookAt(10.,5.,10.,0.,10.,0.,0.,1.,0.);
 		world->ComputeServos();
 		world->Draw();
 		double f=world->GetFitness();

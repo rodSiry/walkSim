@@ -64,14 +64,14 @@ def update_state(s, a):
     n=np.zeros((6))
     for i in range(0,6):
             if(a[i]==0):
-                n[i]+=5
+                n[i]+=20
             elif(a[i]==1):
-                n[i]-=5
+                n[i]-=20
             limit=90
             if abs(n[i])>limit :
                 n[i]=n[i]/abs(n[i])*limit
     return n
-def train_mem(s, f, a, Q):
+def train_mem(s, f, a):
     n=update_state(s,a)
     _,nQ,_=state_pass(n,f)
     train_i=np.zeros((6,10))
@@ -81,7 +81,6 @@ def train_mem(s, f, a, Q):
     for i in range (0, 6):
         r=f[0]+nQ[i]
         train_o[i][int(a[i])]=r
-    #train_o=n_hidden_2/2.*train_o/linalg.norm(train_o)
     return train_i, train_o
 
 def noise_action(aQ):
@@ -89,41 +88,60 @@ def noise_action(aQ):
     a=np.zeros((6))
     for i in range (0, len(aQ)):
         rd=np.random.rand()
-        if rd<0.8:
+        if rd<0.9:
             a[i]=aQ[i]
         else:
             a[i]=np.random.choice(b)
     return a;
 
 pred=multilayer_perceptron(x, weights, biases)
-#cost=tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y)) #optimizer=tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
-cost=tf.reduce_sum(tf.square(y-pred))
-optimizer=tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
+cost=tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y)) 
+optimizer=tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+#cost=tf.reduce_sum(tf.square(y-pred))
+#optimizer=tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
 init=tf.global_variables_initializer()
 serv=np.array([[0,0,0],[0,0,1],[0,1,0],[0,1,1],[1,0,0],[1,0,1]])
-batch_i=[]
-batch_o=[]
+lB=4097
+lMB=4096
+batch_s=np.zeros((lB,6))
+batch_a=np.zeros((lB,6))
+batch_r=np.zeros((lB,1))
 c=0
+cF=0
+epoch=20
 f=np.array([0])
+trained=False
 with tf.Session() as sess: 
     sess.run(init)
     while True:
         Q, _,aQ=state_pass(s, f)
         aQ=noise_action(aQ)
         fit=[0]
-        for i in range (0,10):
-            nS=update_state(s, aQ)
-            io.sendMsg(nS)
-            fit[0]+=io.getMsg()[0]
-        train_i, train_o=train_mem(s, f, aQ, Q)
+        nS=update_state(s, aQ)
+        io.sendMsg(nS)
+        fit[0]=io.getMsg()[0]
+        cF+=fit[0]
         f=fit 
+        #experience storage
+        batch_s[c]=s
+        batch_a[c]=aQ
+        batch_r[c]=fit
         s=nS;
-        print(fit)
-        batch_i=np.append(batch_i, train_i)
-        batch_o=np.append(batch_o, train_o) 
         c+=1
-        c%=100
-        sess.run([optimizer, cost], feed_dict={x:batch_i, y:batch_o})
+        c%=lB
+        if c%512==0 and cF==0:
+            trained=True
+        if c%512==0:
+            cF=0
+        if c%lMB==0 and c!=0 and trained==False: 
+            print("TRAINING...")
+            sub_i=np.random.choice([i for i in range(c-lMB, c)],min(lMB,c))
+            train_i=np.zeros((6*len(sub_i),10))
+            train_o=np.zeros((6*len(sub_i),3))
+            for i in range (0,len(sub_i)):
+                train_i[6*i:6*i+6], train_o[6*i:6*i+6] =train_mem(batch_s[sub_i][i], batch_r[sub_i][i], batch_a[sub_i][i])
+            for j in range (epoch):
+                sess.run([optimizer, cost], feed_dict={x:train_i, y:train_o})
 
 
     

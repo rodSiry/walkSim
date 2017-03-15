@@ -5,7 +5,7 @@ bool Simulation::CheckFall()
 	btTransform t;
 	bodies[1]->getMotionState()->getWorldTransform(t);
 	btVector3 v=(t*btVector3(0.f,1.f,0.f)).normalize();
-	if(v.dot(btVector3(0.f, 1.f, 0.f))<0.9)
+	if(v.dot(btVector3(0.f, 1.f, 0.f))<0.7)
 		return true;
 	else
 		return false;
@@ -79,7 +79,8 @@ Simulation::Simulation():p(btVector3(0.,0.,0.))
 	c->enableAngularMotor(true, 0., 20.);
 	dynamicsWorld->addConstraint(c, false);
 	cs.push_back(c);
-
+	btVector3 vel(0,0,0);
+	bodies[1]->setLinearVelocity(vel);
 }
 
 void Simulation::AddParr(float mass, float x, float y, float z, btVector3 p)
@@ -104,7 +105,10 @@ void Simulation::Draw()
 	p=bodies[1]->getCenterOfMassPosition();
 	double pScal=scal;
 	scal=v.dot(btVector3(0.f, 1.f, 0.f));
-	fit=(scal-pScal)+(p.getY()-pP.getY());
+	if(p.getY()>3.5f)
+		fit=0.f;
+	else
+		fit=-1000.f;
 	dynamicsWorld->stepSimulation(1 / 60.f, 10);
 	deb.setDebugMode(btIDebugDraw::DBG_DrawWireframe);
 	dynamicsWorld->debugDrawWorld();

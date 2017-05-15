@@ -47,8 +47,8 @@ Simulation::Simulation():p(btVector3(0.,0.,0.))
 	AddParr(2., 0.5, 0.5, 0.5, btVector3(-1.,3.25+up,0.));
 	AddParr(2., 0.25, 1., 0.25, btVector3(1.,2.5+up,0.75));
 	AddParr(2., 0.25, 1., 0.25, btVector3(-1.,2.5+up,0.75));
-	AddParr(5., 0.25, 1., 0.25, btVector3(1.5,1.+up,0.75));
-	AddParr(5., 0.25, 1., 0.25, btVector3(-1.5,1.+up,0.75));
+	AddParr(5., 0.25, 1., 2.25, btVector3(1.5,1.+up,0.75));
+	AddParr(5., 0.25, 1., 2.25, btVector3(-1.5,1.+up,0.75));
 	values.push_back(15.f);
 	values.push_back(-15.f);
 	values.push_back(-45.f);
@@ -105,10 +105,7 @@ void Simulation::Draw()
 	p=bodies[1]->getCenterOfMassPosition();
 	double pScal=scal;
 	scal=v.dot(btVector3(0.f, 1.f, 0.f));
-	if(p.getY()>3.5f)
-		fit=0.f;
-	else
-		fit=-1000.f;
+	fit=p.getZ()-pP.getZ();
 	dynamicsWorld->stepSimulation(1 / 60.f, 10);
 	deb.setDebugMode(btIDebugDraw::DBG_DrawWireframe);
 	dynamicsWorld->debugDrawWorld();

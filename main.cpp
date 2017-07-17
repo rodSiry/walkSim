@@ -1,101 +1,72 @@
 #include <iostream>
-#include <btBulletDynamicsCommon.h>
 #include <glm/glm.hpp>
-#include <X11/X.h>
-#include <X11/Xlib.h>
+#include <GL/glew.h>
 #include <GL/glx.h>
 #include <GL/glu.h>
-#include <DebugDrawer.h>
-#include <Simulation.h>
 #include <unistd.h>
-#include "IO.h"
+#include <SDL2/SDL.h>
+#include <glm/gtx/transform.hpp>
+#include "include/IO.h"
+#include "include/Simulation.h"
+#include "include/camera.h"
 
-GLint			 att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
-XVisualInfo*             vi;
-Colormap                cmap;
-XSetWindowAttributes    swa;
-Window                  win;
-GLXContext              glc;
-XWindowAttributes       gwa;
-XEvent                  xev;
-Display                *dpy;
-Window                 root;
+const Uint8 * keys;
 
-int main(int argc, char *argv[]) {
-
-	dpy = XOpenDisplay(NULL);
-
-	if(dpy == NULL) {
-		printf("\n\tcannot connect to X server\n\n");
-		exit(0);
-	}
-	root = DefaultRootWindow(dpy);
-
-	vi = glXChooseVisual(dpy, 0.,att);
-
-	if(vi == NULL) {
-		printf("\n\tno appropriate visual found\n\n");
-		exit(0);
-	} else {
-		printf("\n\tvisual %p selected\n", (void *)vi->visualid); /* %p creates hexadecimal output like in glxinfo */
-	}
-
-
-	cmap = XCreateColormap(dpy, root, vi->visual, AllocNone);
-
-	swa.colormap = cmap;
-	swa.event_mask = ExposureMask | KeyPressMask;
-
-	win = XCreateWindow(dpy, root, 0, 0, 1, 1, 0, vi->depth, InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
-
-	XMapWindow(dpy, win);
-	XStoreName(dpy, win, "Bullet Debug Draw");
-
-	glc = glXCreateContext(dpy, vi, NULL, GL_TRUE);
-	glXMakeCurrent(dpy, win, glc);
-
+int main(int argc, char *argv[]) { 
+	int w;
+	int h;
+	SDL_Window* win(0);
+	SDL_GLContext context(0);
+	SDL_Init(SDL_INIT_VIDEO);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+	win=SDL_CreateWindow("TEST", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1800, 1600, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+	context=SDL_GL_CreateContext(win);
+	std::cout<<glGetString(GL_VERSION)<<std::endl;
+	glewExperimental=GL_TRUE;
+	if(glewInit()!=GLEW_OK)
+		std::cout<<"glew failed."<<std::endl;
+	float c;
+	SDL_GetWindowSize(win, &w, &h);
+	glViewport(0, 0, w, h);
+	glm::mat4 projection=glm::perspective(20.f, float(w)/float(h),0.1f, 100.f);
+	glm::mat4 view=glm::lookAt(glm::vec3(0.f,10.f,10.f),glm::vec3(0.f,0.f,0.f),glm::vec3(0.f,1.f,0.f));
+	glm::mat4 model(glm::mat4(1.f));
 	glEnable(GL_DEPTH_TEST);
-
-	XNextEvent(dpy, &xev);
-	Simulation* world=new Simulation();
-	IOSocket sock("socket");
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	Simulation world;
+	camera cam;
+	cam.x=0;
+	cam.y=0;
+	SDL_CaptureMouse(SDL_TRUE);
+	SDL_SetRelativeMouseMode(SDL_TRUE);
 	while(1) {
-
-		if(xev.type == Expose) {
-			XGetWindowAttributes(dpy, win, &gwa);
-			glViewport(0, 0, gwa.width, gwa.height);
-
-		}
-		else if(xev.type == KeyPress) {
-			glXMakeCurrent(dpy, None, NULL);
-			glXDestroyContext(dpy, glc);
-			XDestroyWindow(dpy, win);
-			XCloseDisplay(dpy);
-			exit(0);
-		}
-		glClearColor(1.0, 1.0, 1.0, 1.0);
+		SDL_Event e;
+		glViewport(0, 0, w, h);
+		c+=0.01;
+		glClearColor(.0, 1.0, 1.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		float rpt=gwa.width/gwa.height;
-		glFrustum(-1.f,  1.f,  -1.f, 1.f,  1.f,  100.f);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		btVector3 pos=world->GetPos();
-		gluLookAt(10.,5.,10.,pos.getX(),pos.getY(),pos.getZ(),0.,1.,0.);
-		world->ComputeServos();
-		world->Draw();
-		double f=world->GetFitness();
-		sock.Write(&f, sizeof(double));
-		double rData[6];
-		sock.Recv(rData);
-		world->ChngTarget(rData);
-		if(world->CheckFall())
+		keys = SDL_GetKeyboardState(NULL);
+		cameraUpdate(&cam, SDL_GetKeyboardState(NULL), &e);
+		while(SDL_PollEvent(&e))
+			if(e.type==SDL_WINDOWEVENT)
+			{
+				SDL_GetWindowSize(win, &w, &h);
+				glViewport(0, 0, w, h);
+				projection=glm::perspective(70.f, float(w)/float(h),0.1f, 100.f);
+			}
+		if (keys[SDL_SCANCODE_ESCAPE])
 		{
-			delete world;
-			world=new Simulation();
+			break;
 		}
-			glXSwapBuffers(dpy, win);
+		view=cameraView(&cam);
+		world.Draw(projection, model, view);
+		SDL_GL_SwapWindow(win);
 	}
-	delete world;
+	SDL_GL_DeleteContext(context);
+	SDL_DestroyWindow(win);
+	SDL_Quit();
 }

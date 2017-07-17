@@ -1,27 +1,28 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 #include <btBulletDynamicsCommon.h>
-#include <DebugDrawer.h>
 #include <vector>
 #include <glm/glm.hpp>
+#include <iostream>
+#include "Pave.h"
 class Simulation
 {
     public:
         Simulation();
         bool CheckFall();
-	void Draw();
+	void Draw(glm::mat4 projection, glm::mat4 model, glm::mat4 view);
         void ChngTarget(double* v);
 	btVector3 GetPos();
 	void ComputeServos();
        	float GetFitness();
 	void AddBody(btRigidBody* b);
         void AddParr(float mass, float x, float y, float z, btVector3 p);
+        void AddPlane();
         virtual ~Simulation();
     protected:
 	double scal;
 	btVector3 p;
 	double fit;
-        DebugDrawer deb;
         btBroadphaseInterface* broadphase;
         btDefaultCollisionConfiguration* collisionConfiguration;
         btCollisionDispatcher* dispatcher;
@@ -33,6 +34,7 @@ class Simulation
         std::vector<btRigidBody*> bodies;
         std::vector<btCollisionShape*> shapes;
         std::vector<btHingeConstraint*> cs;
+	Pave box;
 };
 
 #endif // SIMULATION_H

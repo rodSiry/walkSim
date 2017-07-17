@@ -1,10 +1,8 @@
 SRC=$(wildcard src/*.cpp)
 OBJ=$(SRC:.cpp=.o)
-CXXFLAGS=-g -std=c++11 -Wall -pedantic
+LIBS=-lGL -lGLU -lGLEW -lILU -lIL -lSDL2 -lBulletDynamics -lBulletCollision  -lLinearMath 
+CXXFLAGS=-g -std=c++11 -Wall -pedantic 
 all:main.o $(OBJ)
-	g++ -o Physics -lBulletDynamics -lBulletCollision -lGL -lX11 -lGLU -lLinearMath $^
-
-
-
+	g++ -o Programme -L/usr/local/lib  $(LIBS) $^
 %.o:%.cpp
-	g++ -c $^ -I include -I /usr/local/include/bullet -I /usr/include -o $@
+	g++ -c $^ -I include -I /usr/include -I /usr/local/include/bullet -o $@

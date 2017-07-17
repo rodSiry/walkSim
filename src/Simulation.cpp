@@ -96,7 +96,8 @@ void Simulation::Draw(mat4 projection, mat4 model, mat4 view)
 	scal=v.dot(btVector3(0.f, 1.f, 0.f));
 	fit=p.getZ()-pP.getZ();
 	dynamicsWorld->stepSimulation(1 / 60.f, 10);
-	box.Draw(1,1,1,projection, getMat4(bodies[1]), view);
+	for(int i(1);i<bodies.size();i++)
+		box.Draw(1,1,1,projection, getMat4(bodies[i]), view);
 }
 void Simulation::AddBody(btRigidBody* b)
 {

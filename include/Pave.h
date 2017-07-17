@@ -25,6 +25,8 @@
 #include <glm/glm.hpp>
 #include "vao.h"
 #include "shader.h"
+#include "mesh.h"
+#include <vector>
 
 class Pave{
 	public: 

@@ -23,23 +23,26 @@
 #endif   /* ----- #ifndef BUFFER_OFFSET----- */
 
 using namespace glm;
-vao createVAO(float* vertices, int size)
+vao createVAO(float* vertices, float* normals,  int size)
 {
     vao res;
     res.vboID=0;
     res.vaoID=0;
     glGenBuffers(1,&res.vboID);
     glBindBuffer(GL_ARRAY_BUFFER, res.vboID);
-    glBufferData(GL_ARRAY_BUFFER, size*sizeof(float), vertices, GL_STATIC_DRAW);
-    //glBufferSubData(GL_ARRAY_BUFFER, 0, size*sizeof(float), vertices);
+    glBufferData(GL_ARRAY_BUFFER, 2*size*sizeof(float), NULL, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, size*sizeof(float), vertices);
+    glBufferSubData(GL_ARRAY_BUFFER, size*sizeof(float), size*sizeof(float), normals);
     glBindBuffer(GL_ARRAY_BUFFER,0);
     if(glIsVertexArray(res.vaoID)==GL_TRUE)
         glDeleteVertexArrays(1,&res.vaoID);
     glGenVertexArrays(1, &res.vaoID); 
     glBindVertexArray(res.vaoID);
-    glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, res.vboID);
     glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE, 0, NULL);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE, 0, BUFFER_OFFSET(size*sizeof(float)));
+    glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER,0);
     glBindVertexArray(0);
     return res;

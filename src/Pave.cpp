@@ -18,7 +18,9 @@
 #include <stdlib.h>
 #include "../include/Pave.h"
 using namespace glm;
+using namespace std;
 Pave::Pave():shader(){
+	/*
 	float vertices[108]={
     -1.0f,-1.0f,-1.0f, // triangle 1 : begin
     -1.0f,-1.0f, 1.0f,
@@ -56,8 +58,11 @@ Pave::Pave():shader(){
     1.0f, 1.0f, 1.0f,
     -1.0f, 1.0f, 1.0f,
     1.0f,-1.0f, 1.0f
-};
-	data=createVAO(&vertices[0],108);
+};*/
+	vector<float>vertices;
+	vector<float>normals;
+	addCube(&vertices, &normals, mat4(1.0f));
+	data=createVAO(&vertices[0], &normals[0],108);
 	shader=createProgram("shaders/pave.vert","shaders/pave.frag");
 }
 void Pave::Draw(float x, float y, float z, mat4 projection, mat4 model, mat4 view){

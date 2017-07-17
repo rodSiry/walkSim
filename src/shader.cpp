@@ -28,6 +28,7 @@ Program createProgram(std::string pathV, std::string pathF)
     glAttachShader(res.pID, res.fID);
     glAttachShader(res.pID, res.vID);
     glBindAttribLocation(res.pID,0,"in_Vertex");
+    glBindAttribLocation(res.pID,1,"in_Normals");
     glLinkProgram(res.pID);
     return res;
 }

@@ -32,6 +32,7 @@ struct vao
 };
 vao createVAO(float* vertices, float* normals, int size);
 void printVAO(vao data, GLuint sh, int size, glm::mat4 projection,glm::mat4 model,glm::mat4 view);
+void printParr(vao data, GLuint sh, int size, glm::mat4 projection,glm::mat4 model,glm::mat4 view, glm::vec3 dim);
 void printBillboard(vao data, GLuint sh, int size, glm::mat4 projection,glm::mat4 model,glm::mat4 view);
 vao freeVAO(vao data);
 #endif   /* ----- #ifndef VAO_INC  ----- */

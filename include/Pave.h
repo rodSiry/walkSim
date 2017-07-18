@@ -32,7 +32,7 @@ class Pave{
 	public: 
 		Pave();
 		~Pave();
-	void	Draw(float x, float y, float z, glm::mat4 projection, glm::mat4 model, glm::mat4 view);
+	void	Draw(float x, float y, float z, glm::mat4 projection, glm::mat4 model, glm::mat4 view, glm::vec3 dim);
 	private:
 		Program shader;
 		vao data;

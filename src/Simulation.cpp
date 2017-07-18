@@ -27,6 +27,7 @@ btVector3 Simulation::GetPos()
 }
 Simulation::Simulation():p(btVector3(0.,0.,0.)), box(Pave())
 {
+	fit=0.;
 	broadphase = new btDbvtBroadphase();
 	collisionConfiguration = new btDefaultCollisionConfiguration();
 	dispatcher = new btCollisionDispatcher(collisionConfiguration);
@@ -49,8 +50,8 @@ Simulation::Simulation():p(btVector3(0.,0.,0.)), box(Pave())
 	AddParr(2., 0.5, 0.5, 0.5, btVector3(-1.,3.25+up,0.));
 	AddParr(2., 0.25, 1., 0.25, btVector3(1.,2.5+up,0.75));
 	AddParr(2., 0.25, 1., 0.25, btVector3(-1.,2.5+up,0.75));
-	AddParr(5., 0.25, 1., 2.25, btVector3(1.5,1.+up,0.75));
-	AddParr(5., 0.25, 1., 2.25, btVector3(-1.5,1.+up,0.75));
+	AddParr(5., 0.25, 1., 0.25, btVector3(1.5,1.+up,0.75));
+	AddParr(5., 0.25, 1., 0.25, btVector3(-1.5,1.+up,0.75));
 	values.push_back(15.f);
 	values.push_back(-15.f);
 	values.push_back(-45.f);
@@ -58,11 +59,36 @@ Simulation::Simulation():p(btVector3(0.,0.,0.)), box(Pave())
 	values.push_back(-15.f);
 	values.push_back(-45.f);
 	btVector3 vel(0,0,0);
-	bodies[1]->setLinearVelocity(vel);
+	btHingeConstraint* c= new btHingeConstraint(*bodies[1],*bodies[2],btVector3(0.5,-0.5,0.),btVector3(-0.5,0.,0.),btVector3(1.,0.,0.),btVector3(1.,0.,0.),false);
+	c->enableAngularMotor(true, 0., 20.);
+	dynamicsWorld->addConstraint(c, false);
+	cs.push_back(c);
+	c= new btHingeConstraint(*bodies[2],*bodies[4],btVector3(0.,0.,0.5),btVector3(-0.,0.75,-0.25),btVector3(0.,0.,1.),btVector3(0.,0.,1.),false);
+	c->enableAngularMotor(true, 0., 20.);
+	dynamicsWorld->addConstraint(c, false);
+	cs.push_back(c);
+	c= new btHingeConstraint(*bodies[4],*bodies[6],btVector3(0.25,-0.75,0.),btVector3(-0.25,0.75,0.),btVector3(1.,0.,0.),btVector3(1.,0.,0.),false);
+	c->enableAngularMotor(true, 0., 20.);
+	dynamicsWorld->addConstraint(c, false);
+	cs.push_back(c);
+	c= new btHingeConstraint(*bodies[1],*bodies[3],btVector3(-0.5,-0.5,0.),btVector3(0.5,0.,0.),btVector3(1.,0.,0.),btVector3(1.,0.,0.),false);
+	c->enableAngularMotor(true, 0., 20.);
+	dynamicsWorld->addConstraint(c, false);
+	cs.push_back(c);
+	c= new btHingeConstraint(*bodies[3],*bodies[5],btVector3(0.,0.,0.5),btVector3(-0.,0.75,-0.25),btVector3(0.,0.,-1.),btVector3(0.,0.,-1.),false);
+	c->enableAngularMotor(true, 0., 20.);
+	dynamicsWorld->addConstraint(c, false);
+	cs.push_back(c);
+	c= new btHingeConstraint(*bodies[5],*bodies[7],btVector3(-0.25,-0.75,0.),btVector3(0.25,0.75,0.),btVector3(1.,0.,0.),btVector3(1.,0.,0.),false);
+	c->enableAngularMotor(true, 0., 20.);
+	dynamicsWorld->addConstraint(c, false);
+	cs.push_back(c);
+//	bodies[1]->setLinearVelocity(vel);
 }
 
 void Simulation::AddParr(float mass, float x, float y, float z, btVector3 p)
 {
+	dimensions.push_back(vec3(x, y, z));
 	btCollisionShape* shp= new btBoxShape(btVector3(x,y,z));
 	shapes.push_back(shp);
 	btDefaultMotionState* fallMotionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), p));
@@ -97,7 +123,7 @@ void Simulation::Draw(mat4 projection, mat4 model, mat4 view)
 	fit=p.getZ()-pP.getZ();
 	dynamicsWorld->stepSimulation(1 / 60.f, 10);
 	for(int i(1);i<bodies.size();i++)
-		box.Draw(1,1,1,projection, getMat4(bodies[i]), view);
+		box.Draw(1,1,1,projection, getMat4(bodies[i]), view, dimensions[i-1]);
 }
 void Simulation::AddBody(btRigidBody* b)
 {
@@ -111,7 +137,9 @@ void Simulation::ComputeServos()
 		float b=((int)values[i]%360)*M_PI/180.f;
 		if(b>3.14)
 			b=b-2.*3.14;
+		cs[i]->setLimit(b,b);
 	}
+
 }
 Simulation::~Simulation()
 {
@@ -121,7 +149,6 @@ Simulation::~Simulation()
 		delete bodies[i]->getMotionState();
 		delete bodies[i];
 	}
-	delete groundShape;
 	for(int i(0);i<shapes.size();i++)
 	{
 		delete shapes[i];

@@ -65,8 +65,8 @@ Pave::Pave():shader(){
 	data=createVAO(&vertices[0], &normals[0],108);
 	shader=createProgram("shaders/pave.vert","shaders/pave.frag");
 }
-void Pave::Draw(float x, float y, float z, mat4 projection, mat4 model, mat4 view){
-	printVAO(data, shader.pID, 108, projection, model, view);	
+void Pave::Draw(float x, float y, float z, mat4 projection, mat4 model, mat4 view, vec3 dim){
+	printParr(data, shader.pID, 108, projection, model, view, dim);	
 }
 Pave::~Pave(){
 	freeProgram(shader);

@@ -47,6 +47,18 @@ vao createVAO(float* vertices, float* normals,  int size)
     glBindVertexArray(0);
     return res;
 }
+void printParr(vao data, GLuint sh, int size, glm::mat4 projection,glm::mat4 model,glm::mat4 view, glm::vec3 dim)
+{
+    glUseProgram(sh);
+    glBindVertexArray(data.vaoID);
+    glUniformMatrix4fv(glGetUniformLocation(sh, "projection"),1,GL_FALSE, value_ptr(projection));
+    glUniformMatrix4fv(glGetUniformLocation(sh, "model"),1,GL_FALSE, value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(sh, "view"),1,GL_FALSE, value_ptr(view));
+    glUniform3f(glGetUniformLocation(sh, "dim"),dim.x, dim.y, dim.z);
+    glDrawArrays(GL_TRIANGLES, 0, 108);
+    glBindVertexArray(0); 
+    glUseProgram(0);
+}
 void printVAO(vao data, GLuint sh, int size, glm::mat4 projection,glm::mat4 model,glm::mat4 view)
 {
     glUseProgram(sh);

@@ -37,12 +37,13 @@ int main(int argc, char *argv[]) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	Simulation world;
+	Simulation* world=new Simulation();
 	camera cam;
 	cam.x=0;
 	cam.y=0;
 	SDL_CaptureMouse(SDL_TRUE);
 	SDL_SetRelativeMouseMode(SDL_TRUE);
+	IOSocket sock("socket");
 	while(1) {
 		SDL_Event e;
 		glViewport(0, 0, w, h);
@@ -62,10 +63,22 @@ int main(int argc, char *argv[]) {
 		{
 			break;
 		}
+		world->ComputeServos();
+		world->Draw(projection, model, view);
+		double f=world->GetFitness();
+		sock.Write(&f, sizeof(double));
+		double rData[6];
+		sock.Recv(rData);
+		world->ChngTarget(rData);
+		if(world->CheckFall())
+		{
+			delete world;
+			world=new Simulation();
+		}
 		view=cameraView(&cam);
-		world.Draw(projection, model, view);
 		SDL_GL_SwapWindow(win);
 	}
+	delete world;
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(win);
 	SDL_Quit();

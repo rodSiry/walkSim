@@ -32,6 +32,7 @@ class Simulation
         btCollisionShape* fallShape;
         std::vector<float>values;
         std::vector<btRigidBody*> bodies;
+	std::vector<glm::vec3> dimensions;
         std::vector<btCollisionShape*> shapes;
         std::vector<btHingeConstraint*> cs;
 	Pave box;

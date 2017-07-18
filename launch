@@ -1,0 +1,4 @@
+rm socket 
+python Qtest.py &
+sleep 10
+./Programme

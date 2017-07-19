@@ -67,14 +67,14 @@ int main(int argc, char *argv[]) {
 		world->Draw(projection, model, view);
 		double f=world->GetFitness();
 		sock.Write(&f, sizeof(double));
-		double rData[6];
+		double rData[8];
 		sock.Recv(rData);
 		world->ChngTarget(rData);
-		if(world->CheckFall())
+/*		if(world->CheckFall())
 		{
 			delete world;
 			world=new Simulation();
-		}
+		}*/
 		view=cameraView(&cam);
 		SDL_GL_SwapWindow(win);
 	}

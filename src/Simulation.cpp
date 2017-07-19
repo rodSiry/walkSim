@@ -14,7 +14,7 @@ bool Simulation::CheckFall()
 	btTransform t;
 	bodies[1]->getMotionState()->getWorldTransform(t);
 	btVector3 v=(t*btVector3(0.f,1.f,0.f)).normalize();
-	if(v.dot(btVector3(0.f, 1.f, 0.f))<0.7)
+	if(bodies[1]->getCenterOfMassPosition().getY()<4.)
 		return true;
 	else
 		return false;
@@ -43,7 +43,7 @@ Simulation::Simulation():p(btVector3(0.,0.,0.)), box(Pave())
 	   btRigidBody::btRigidBodyConstructionInfo fallRigidBodyCI(mass, fallMotionState, fallShape, fallInertia);
 	   btRigidBody* fallRigidBody = new btRigidBody(fallRigidBodyCI);
 	   AddBody(fallRigidBody);*/
-	float up=10.f;
+	float up=1.5f;
 	AddPlane();
 	AddParr(5., 0.5, 1., 0.5, btVector3(0.,3.75+up,0.));
 	AddParr(2., 0.5, 0.5, 0.5, btVector3(1.,3.25+up,0.));
@@ -52,12 +52,16 @@ Simulation::Simulation():p(btVector3(0.,0.,0.)), box(Pave())
 	AddParr(2., 0.25, 1., 0.25, btVector3(-1.,2.5+up,0.75));
 	AddParr(5., 0.25, 1., 0.25, btVector3(1.5,1.+up,0.75));
 	AddParr(5., 0.25, 1., 0.25, btVector3(-1.5,1.+up,0.75));
-	values.push_back(15.f);
-	values.push_back(-15.f);
+	AddParr(5., 0.25, 1., 0.25, btVector3(1.25,-0.5+up,0.75));
+	AddParr(5., 0.25, 1., 0.25, btVector3(-1.25,-0.5+up,0.75));
+	values.push_back(30.f);
+	values.push_back(-30.f);
 	values.push_back(-45.f);
 	values.push_back(15.f);
 	values.push_back(-15.f);
 	values.push_back(-45.f);
+	values.push_back(-0.f);
+	values.push_back(-0.f);
 	btVector3 vel(0,0,0);
 	btHingeConstraint* c= new btHingeConstraint(*bodies[1],*bodies[2],btVector3(0.5,-0.5,0.),btVector3(-0.5,0.,0.),btVector3(1.,0.,0.),btVector3(1.,0.,0.),false);
 	c->enableAngularMotor(true, 0., 20.);
@@ -83,6 +87,17 @@ Simulation::Simulation():p(btVector3(0.,0.,0.)), box(Pave())
 	c->enableAngularMotor(true, 0., 20.);
 	dynamicsWorld->addConstraint(c, false);
 	cs.push_back(c);
+	c= new btHingeConstraint(*bodies[6],*bodies[8],btVector3(-0.25,-0.75,0.),btVector3(0.25,0.75,0.),btVector3(1.,0.,0.),btVector3(1.,0.,0.),false);
+	c->enableAngularMotor(true, 0., 20.);
+	dynamicsWorld->addConstraint(c, false);
+	cs.push_back(c);
+	c= new btHingeConstraint(*bodies[7],*bodies[9],btVector3(0.25,-0.75,0.),btVector3(-0.25,0.75,0.),btVector3(1.,0.,0.),btVector3(1.,0.,0.),false);
+	c->enableAngularMotor(true, 0., 20.);
+	dynamicsWorld->addConstraint(c, false);
+	cs.push_back(c);
+
+
+
 //	bodies[1]->setLinearVelocity(vel);
 }
 
@@ -121,6 +136,7 @@ void Simulation::Draw(mat4 projection, mat4 model, mat4 view)
 	double pScal=scal;
 	scal=v.dot(btVector3(0.f, 1.f, 0.f));
 	fit=p.getZ()-pP.getZ();
+	std::cout<<fit<<std::endl;
 	dynamicsWorld->stepSimulation(1 / 60.f, 10);
 	for(int i(1);i<bodies.size();i++)
 		box.Draw(1,1,1,projection, getMat4(bodies[i]), view, dimensions[i-1]);

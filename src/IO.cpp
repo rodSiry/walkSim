@@ -21,12 +21,13 @@ void IOSocket::Write(double* data,int len)
 void IOSocket::Recv(double * data)
 {
 	int len;
-	char buf[48+sizeof(int)];
-	bzero(&buf[0], 48+sizeof(int));
+	char buf[64+sizeof(int)];
+	bzero(&buf[0], 64+sizeof(int));
 	recv(sock, &buf[0], sizeof(int), NULL);
 	memcpy(&len, &buf[0], sizeof(int));
 	recv(sock, &buf[sizeof(int)], len*sizeof(double), NULL);
 	memcpy(data, &buf[sizeof(int)], len*sizeof(double));
+
 }
 IOSocket::~IOSocket()
 {

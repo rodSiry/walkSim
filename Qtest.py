@@ -4,14 +4,15 @@ import numpy as np
 import numpy.linalg as linalg
 io=IO()
 print(io.getMsg())
-n_input=9
-n_hidden_1=32
-n_hidden_2=32
+n_servo=8
+n_input=n_servo+3
+n_hidden_1=11
+n_hidden_2=11
 n_classes=3
-learning_rate=0.1
+learning_rate=0.001
 x=tf.placeholder("float", [None, n_input])
 y=tf.placeholder("float", [None, n_classes])
-s=[15., -15., -45., 15., -15., -45.]
+s=[30., -30., -45., 15., -15., -45., 0.,0.]
 def multilayer_perceptron(x, weights, biases): 
     layer_1=tf.add(tf.matmul(x, weights['h1']), biases['b1'])
     layer_1=tf.nn.tanh(layer_1)
@@ -47,13 +48,13 @@ biases={
         }
 
 def create_input(s, i):
-    serv=np.array([[0,0,0],[0,0,1],[0,1,0],[0,1,1],[1,0,0],[1,0,1]])
+    serv=np.array([[0,0,0],[0,0,1],[0,1,0],[0,1,1],[1,0,0],[1,0,1],[1,1,0],[1,1,1]])
     return np.array([np.concatenate((serv[i],s))])
 def state_pass(s):
-    aQ=np.zeros(6)
-    nQ=np.zeros(6)
-    Q=np.zeros((6, 3))
-    for i in range (0, 6):
+    aQ=np.zeros(n_servo)
+    nQ=np.zeros(n_servo)
+    Q=np.zeros((n_servo, 3))
+    for i in range (0, n_servo):
             test=create_input(s, i)
             o=sess.run([pred], feed_dict={x:test})
             Q[i]=np.array(o)
@@ -61,31 +62,33 @@ def state_pass(s):
             nQ[i]=np.amax(o)
     return Q, nQ, aQ
 def update_state(s, a):
-    n=np.zeros((6))
-    for i in range(0,6):
+    n=np.zeros((n_servo))
+    for i in range(0,n_servo):
+            n[i]=s[i]
             if(a[i]==0):
-                n[i]+=20
+                n[i]+=5
             elif(a[i]==1):
-                n[i]-=20
-            limit=90
-            if abs(n[i])>limit :
-                n[i]=n[i]/abs(n[i])*limit
+                n[i]-=5
+            n[i]%=360
+           #limit=360
+            #if abs(n[i])>limit :
+            #    n[i]=n[i]/abs(n[i])*limit
     return n
 def train_mem(s, f, a):
     n=update_state(s,a)
     _,nQ,_=state_pass(n)
-    train_i=np.zeros((6,n_input))
-    for i in range (0, 6):
+    train_i=np.zeros((n_servo,n_input))
+    for i in range (0, n_servo):
         train_i[i]=create_input(s, i)
     train_o=np.copy(Q)
-    for i in range (0, 6):
-        r=f[0]+nQ[i]
+    for i in range (0, n_servo):
+        r=10.*f[0]+nQ[i]
         train_o[i][int(a[i])]=r
     return train_i, train_o
 
 def noise_action(aQ):
     b=np.array([0,1,2]) 
-    a=np.zeros((6))
+    a=np.zeros((n_servo))
     for i in range (0, len(aQ)):
         rd=np.random.rand()
         if rd<0.9:
@@ -101,14 +104,14 @@ optimizer=tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 #optimizer=tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
 init=tf.global_variables_initializer()
 serv=np.array([[0,0,0],[0,0,1],[0,1,0],[0,1,1],[1,0,0],[1,0,1]])
-lB=1024
-lMB=1024
-batch_s=np.zeros((lB,6))
-batch_a=np.zeros((lB,6))
+lB=1
+lMB=1
+batch_s=np.zeros((lB,n_servo))
+batch_a=np.zeros((lB,n_servo))
 batch_r=np.zeros((lB,1))
 c=0
 cF=0
-epoch=10
+epoch=1
 f=np.array([0])
 trained=False
 with tf.Session() as sess: 
@@ -116,11 +119,13 @@ with tf.Session() as sess:
     while True:
         Q, _,aQ=state_pass(s)
         aQ=noise_action(aQ)
+        print(Q)
         fit=[0]
-        nS=update_state(s, aQ)
-        io.sendMsg(nS)
-        fit[0]=io.getMsg()[0]
-        cF+=fit[0]
+        for i in range(0,1):
+            nS=update_state(s, aQ)
+            io.sendMsg(nS)
+            fit[0]=io.getMsg()[0]
+            cF+=fit[0]
         f=fit 
         #experience storage
         batch_s[c]=s
@@ -134,14 +139,14 @@ with tf.Session() as sess:
             cF=0
         if c%lMB==0 and c!=0 and trained==False: 
             print("TRAINING...")
-            #sub_i=np.random.choice([i for i in range(c-lMB, c)],min(lMB,c))
-            sub_i=np.random.choice([i for i in range(0, min(lB, c))], min(lMB, c))
-            train_i=np.zeros((6*len(sub_i),n_input))
-            train_o=np.zeros((6*len(sub_i),3))
-            for i in range (0,len(sub_i)):
-                    train_i[6*i:6*i+6], train_o[6*i:6*i+6] =train_mem(batch_s[sub_i][i], batch_r[sub_i][i], batch_a[sub_i][i])
             for j in range (epoch):
-                sess.run([optimizer, cost], feed_dict={x:train_i, y:train_o})
+                #sub_i=np.random.choice([i for i in range(c-lMB, c)],min(lMB,c))
+                sub_i=np.random.choice([i for i in range(0, min(lB, c))], min(lMB, c))
+                train_i=np.zeros((n_servo*len(sub_i),n_input))
+                train_o=np.zeros((n_servo*len(sub_i),3))
+                for i in range (0,len(sub_i)):
+                        train_i[n_servo*i:n_servo*i+n_servo], train_o[n_servo*i:n_servo*i+n_servo] =train_mem(batch_s[sub_i][i], batch_r[sub_i][i], batch_a[sub_i][i])
+                        sess.run([optimizer, cost], feed_dict={x:train_i, y:train_o})
         c%=lB
 
     

@@ -9,6 +9,7 @@
 #include "include/IO.h"
 #include "include/Simulation.h"
 #include "include/camera.h"
+#include <vector>
 
 const Uint8 * keys;
 
@@ -63,6 +64,8 @@ int main(int argc, char *argv[]) {
 		{
 			break;
 		}
+		std::vector<double> state=world->GetState();
+		sock.Write(&state[0], state.size()*sizeof(double));
 		world->ComputeServos();
 		world->Draw(projection, model, view);
 		double f=world->GetFitness();

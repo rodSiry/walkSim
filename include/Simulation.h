@@ -16,6 +16,7 @@ class Simulation
 	void ComputeServos();
        	float GetFitness();
 	void AddBody(btRigidBody* b);
+	std::vector<double> GetState();
         void AddParr(float mass, float x, float y, float z, btVector3 p);
         void AddPlane();
         virtual ~Simulation();

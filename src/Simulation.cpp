@@ -46,10 +46,10 @@ Simulation::Simulation():p(btVector3(0.,0.,0.)), box(Pave())
 	float up=1.5f;
 	AddPlane();
 	AddParr(5., 0.5, 1., 0.5, btVector3(0.,3.75+up,0.));
-	AddParr(2., 0.5, 0.5, 0.5, btVector3(1.,3.25+up,0.));
-	AddParr(2., 0.5, 0.5, 0.5, btVector3(-1.,3.25+up,0.));
-	AddParr(2., 0.25, 1., 0.25, btVector3(1.,2.5+up,0.75));
-	AddParr(2., 0.25, 1., 0.25, btVector3(-1.,2.5+up,0.75));
+	AddParr(5., 0.5, 0.5, 0.5, btVector3(1.,3.25+up,0.));
+	AddParr(5., 0.5, 0.5, 0.5, btVector3(-1.,3.25+up,0.));
+	AddParr(5., 0.25, 1., 0.25, btVector3(1.,2.5+up,0.75));
+	AddParr(5., 0.25, 1., 0.25, btVector3(-1.,2.5+up,0.75));
 	AddParr(5., 0.25, 1., 0.25, btVector3(1.5,1.+up,0.75));
 	AddParr(5., 0.25, 1., 0.25, btVector3(-1.5,1.+up,0.75));
 	AddParr(5., 0.25, 1., 0.25, btVector3(1.25,-0.5+up,0.75));
@@ -136,7 +136,6 @@ void Simulation::Draw(mat4 projection, mat4 model, mat4 view)
 	double pScal=scal;
 	scal=v.dot(btVector3(0.f, 1.f, 0.f));
 	fit=p.getZ()-pP.getZ();
-	std::cout<<fit<<std::endl;
 	dynamicsWorld->stepSimulation(1 / 60.f, 10);
 	for(int i(1);i<bodies.size();i++)
 		box.Draw(1,1,1,projection, getMat4(bodies[i]), view, dimensions[i-1]);
@@ -150,10 +149,14 @@ void Simulation::ComputeServos()
 {
 	for(int i(0);i<cs.size();i++)
 	{
-		float b=((int)values[i]%360)*M_PI/180.f;
-		if(b>3.14)
-			b=b-2.*3.14;
-		cs[i]->setLimit(b,b);
+//		cs[i]->setLimit(b,b)
+		float targetVelocity = 0.f;
+		if(values[i]!=0.f)
+			targetVelocity = values[i]/abs(values[i])*9999.f;
+		float maxMotorImpulse = values[i];
+		std::cout<<values[i]<<std::endl;
+		cs[i]->enableAngularMotor(false, targetVelocity,abs(values[i]));
+		cs[i]->enableMotor(true);
 	}
 
 }
@@ -184,10 +187,21 @@ void Simulation::ChngTarget(double* v)
 {
 	for(int i(0);i<values.size();i++)
 	{
-		values[i]=v[i];	
+		values[i]=v[i];
+		if(abs(values[i])>=90.f)
+			values[i]=70.f*values[i]/abs(values[i]);
 	}
 }
 float Simulation::GetFitness()
 {
 	return fit;  
+}
+std::vector<double> Simulation::GetState(){
+	std::vector<double> res;
+	for(int i(0);i<cs.size();i++)
+	{
+		res.push_back(90/M_PI*cs[i]->getHingeAngle());
+	}
+	return res;
+			
 }

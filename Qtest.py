@@ -3,7 +3,6 @@ import tensorflow as tf
 import numpy as np
 import numpy.linalg as linalg
 io=IO()
-print(io.getMsg())
 n_servo=8
 n_input=n_servo+3
 n_hidden_1=11
@@ -12,7 +11,6 @@ n_classes=3
 learning_rate=0.001
 x=tf.placeholder("float", [None, n_input])
 y=tf.placeholder("float", [None, n_classes])
-s=[30., -30., -45., 15., -15., -45., 0.,0.]
 def multilayer_perceptron(x, weights, biases): 
     layer_1=tf.add(tf.matmul(x, weights['h1']), biases['b1'])
     layer_1=tf.nn.tanh(layer_1)
@@ -64,18 +62,16 @@ def state_pass(s):
 def update_state(s, a):
     n=np.zeros((n_servo))
     for i in range(0,n_servo):
-            n[i]=s[i]
             if(a[i]==0):
                 n[i]+=5
             elif(a[i]==1):
                 n[i]-=5
-            n[i]%=360
            #limit=360
             #if abs(n[i])>limit :
             #    n[i]=n[i]/abs(n[i])*limit
     return n
 def train_mem(s, f, a):
-    n=update_state(s,a)
+    n=s+update_state(s,a)
     _,nQ,_=state_pass(n)
     train_i=np.zeros((n_servo,n_input))
     for i in range (0, n_servo):
@@ -91,7 +87,7 @@ def noise_action(aQ):
     a=np.zeros((n_servo))
     for i in range (0, len(aQ)):
         rd=np.random.rand()
-        if rd<0.9:
+        if rd<1.:
             a[i]=aQ[i]
         else:
             a[i]=np.random.choice(b)
@@ -104,8 +100,8 @@ optimizer=tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 #optimizer=tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
 init=tf.global_variables_initializer()
 serv=np.array([[0,0,0],[0,0,1],[0,1,0],[0,1,1],[1,0,0],[1,0,1]])
-lB=1
-lMB=1
+lB=64
+lMB=64
 batch_s=np.zeros((lB,n_servo))
 batch_a=np.zeros((lB,n_servo))
 batch_r=np.zeros((lB,1))
@@ -117,9 +113,9 @@ trained=False
 with tf.Session() as sess: 
     sess.run(init)
     while True:
+        s=io.getMsg()
         Q, _,aQ=state_pass(s)
         aQ=noise_action(aQ)
-        print(Q)
         fit=[0]
         for i in range(0,1):
             nS=update_state(s, aQ)
@@ -127,11 +123,11 @@ with tf.Session() as sess:
             fit[0]=io.getMsg()[0]
             cF+=fit[0]
         f=fit 
+        print(nS)
         #experience storage
         batch_s[c]=s
         batch_a[c]=aQ 
         batch_r[c]=fit
-        s=nS;
         c+=1
         if c%512==0 and cF==0:
             trained=True

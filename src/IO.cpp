@@ -13,7 +13,7 @@ IOSocket::IOSocket(string path)
 		exit(0);
 	}
 }
-void IOSocket::Write(double* data,int len)
+void IOSocket::Write(double* data, int len)
 {
 	write(sock, &len, sizeof(len));
 	write(sock, data, len);

@@ -45,6 +45,8 @@ int main(int argc, char *argv[]) {
 	SDL_CaptureMouse(SDL_TRUE);
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 	IOSocket sock("socket");
+    std::vector<double> state=world->GetState();
+	sock.Write(&state[0], state.size()*sizeof(double));
 	while(1) {
 		SDL_Event e;
 		glViewport(0, 0, w, h);
@@ -64,20 +66,31 @@ int main(int argc, char *argv[]) {
 		{
 			break;
 		}
-		std::vector<double> state=world->GetState();
-		sock.Write(&state[0], state.size()*sizeof(double));
-		world->ComputeServos();
-		world->Draw(projection, model, view);
-		double f=world->GetFitness();
-		sock.Write(&f, sizeof(double));
 		double rData[8];
 		sock.Recv(rData);
 		world->ChngTarget(rData);
-/*		if(world->CheckFall())
+		world->ComputeServos();
+		std::vector<double> state=world->GetState();
+		sock.Write(&state[0], state.size()*sizeof(double));
+		double f=world->GetFitness();
+		sock.Write(&f, sizeof(double));		
+        double b;
+		world->Draw(projection, model, view);
+		if(world->CheckFall())
 		{
 			delete world;
+            b=1.;
+		    sock.Write(&b, sizeof(double));
 			world=new Simulation();
-		}*/
+            std::vector<double> state=world->GetState();
+            sock.Write(&state[0], state.size()*sizeof(double));
+
+		}
+        else{
+            b=0.;
+		    sock.Write(&b, sizeof(double));
+
+        }
 		view=cameraView(&cam);
 		SDL_GL_SwapWindow(win);
 	}

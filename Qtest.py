@@ -4,11 +4,12 @@ import numpy as np
 import numpy.linalg as linalg
 io=IO()
 n_servo=8
-n_input=n_servo+3
+n_input=2*n_servo+3
+n_state=2*n_servo
 n_hidden_1=11
 n_hidden_2=11
 n_classes=3
-learning_rate=0.001
+learning_rate=0.001 
 x=tf.placeholder("float", [None, n_input])
 y=tf.placeholder("float", [None, n_classes])
 def multilayer_perceptron(x, weights, biases): 
@@ -100,9 +101,9 @@ optimizer=tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 #optimizer=tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cost)
 init=tf.global_variables_initializer()
 serv=np.array([[0,0,0],[0,0,1],[0,1,0],[0,1,1],[1,0,0],[1,0,1]])
-lB=64
-lMB=64
-batch_s=np.zeros((lB,n_servo))
+lB=64000
+lMB=6004
+batch_s=np.zeros((lB,n_state))
 batch_a=np.zeros((lB,n_servo))
 batch_r=np.zeros((lB,1))
 c=0
@@ -114,6 +115,7 @@ with tf.Session() as sess:
     sess.run(init)
     while True:
         s=io.getMsg()
+        print(s)
         Q, _,aQ=state_pass(s)
         aQ=noise_action(aQ)
         fit=[0]
@@ -123,7 +125,6 @@ with tf.Session() as sess:
             fit[0]=io.getMsg()[0]
             cF+=fit[0]
         f=fit 
-        print(nS)
         #experience storage
         batch_s[c]=s
         batch_a[c]=aQ 
@@ -136,12 +137,11 @@ with tf.Session() as sess:
         if c%lMB==0 and c!=0 and trained==False: 
             print("TRAINING...")
             for j in range (epoch):
-                #sub_i=np.random.choice([i for i in range(c-lMB, c)],min(lMB,c))
                 sub_i=np.random.choice([i for i in range(0, min(lB, c))], min(lMB, c))
-                train_i=np.zeros((n_servo*len(sub_i),n_input))
+                train_i=np.zeros((n_state*len(sub_i),n_input))
                 train_o=np.zeros((n_servo*len(sub_i),3))
                 for i in range (0,len(sub_i)):
-                        train_i[n_servo*i:n_servo*i+n_servo], train_o[n_servo*i:n_servo*i+n_servo] =train_mem(batch_s[sub_i][i], batch_r[sub_i][i], batch_a[sub_i][i])
+                        train_i[n_state*i:n_state*i+n_state], train_o[n_servo*i:n_servo*i+n_servo] =train_mem(batch_s[sub_i][i], batch_r[sub_i][i], batch_a[sub_i][i])
                         sess.run([optimizer, cost], feed_dict={x:train_i, y:train_o})
         c%=lB
 

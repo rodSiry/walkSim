@@ -36,6 +36,7 @@ class Simulation
 	std::vector<glm::vec3> dimensions;
         std::vector<btCollisionShape*> shapes;
         std::vector<btHingeConstraint*> cs;
+        std::vector<double> prevState;
 	Pave box;
 };
 

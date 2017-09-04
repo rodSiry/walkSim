@@ -95,6 +95,9 @@ Simulation::Simulation():p(btVector3(0.,0.,0.)), box(Pave())
 	c->enableAngularMotor(true, 0., 20.);
 	dynamicsWorld->addConstraint(c, false);
 	cs.push_back(c);
+    for(int i(0);i<cs.size();i++){
+        prevState.push_back(0);
+    }
 
 
 
@@ -154,7 +157,6 @@ void Simulation::ComputeServos()
 		if(values[i]!=0.f)
 			targetVelocity = values[i]/abs(values[i])*9999.f;
 		float maxMotorImpulse = values[i];
-		std::cout<<values[i]<<std::endl;
 		cs[i]->enableAngularMotor(false, targetVelocity,abs(values[i]));
 		cs[i]->enableMotor(true);
 	}
@@ -202,6 +204,12 @@ std::vector<double> Simulation::GetState(){
 	{
 		res.push_back(90/M_PI*cs[i]->getHingeAngle());
 	}
+
+	for(int i(0);i<cs.size();i++)
+    {
+       res.push_back(90/M_PI*cs[i]->getHingeAngle()-prevState[i]);
+       prevState[i]=90/M_PI*cs[i]->getHingeAngle();
+    }
 	return res;
 			
 }

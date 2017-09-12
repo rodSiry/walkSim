@@ -136,7 +136,7 @@ void Simulation::Draw(mat4 projection, mat4 model, mat4 view)
 	p=bodies[1]->getCenterOfMassPosition();
 	double pScal=scal;
 	scal=v.dot(btVector3(0.f, 1.f, 0.f));
-	fit=p.getY();
+	fit=p.getY()+scal;
 	dynamicsWorld->stepSimulation(1 / 60.f, 10);
 	for(int i(1);i<bodies.size();i++)
 		box.Draw(1,1,1,projection, getMat4(bodies[i]), view, dimensions[i-1]);

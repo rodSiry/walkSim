@@ -39,9 +39,11 @@ class Net(nn.Module):
         self.ci3=self.c0
     def forward(self, x):
         self.hi1, self.ci1 =self.fc1(x, (self.hi1, self.ci1))
+        x=self.activ(self.hi1)
         self.hi2, self.ci2 =self.fc2(x, (self.hi2, self.ci2))
+        x=self.activ(self.hi2)
         self.hi3, self.ci3 =self.fc3(x, (self.hi3, self.ci3))
-        x=self.activ(self.h0)
+        x=self.activ(self.hi3)
         x=self.activ(self.fc4(x))
         x=self.activ(self.fc5(x))
         x=self.activ(self.fc6(x))
@@ -75,7 +77,7 @@ n_servo=8
 n_input=2*n_servo+1
 n_output=2*n_servo
 torque_int=1
-torque_int_std=20
+torque_int_std=30
         
 io=IO()
 network=Net(n_input,128, n_output)

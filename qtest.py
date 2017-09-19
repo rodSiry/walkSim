@@ -6,32 +6,39 @@ import torch.optim as optim
 import torch.autograd as autograd
 from torch.autograd import Variable
 from torch.autograd._functions import stochastic as STO
+from listmodule import ListModule
 import gym
 from IO import *
 
 class Net(nn.Module):
     def __init__(self, n_input, n_hidden, n_output):
         super(Net, self).__init__()
-        self.fc4=nn.Linear(n_hidden, n_hidden )
-        self.fc5=nn.Linear(n_hidden, n_hidden )
-        self.fc6=nn.Linear(n_hidden, n_output)
         self.saved_actions=[]
         self.rewards=[]
         self.normal=STO.Normal()
         self.activ=nn.LeakyReLU()
-        self.h0=Variable(torch.randn(1,n_hidden))
-        self.c0=Variable(torch.randn(1,n_hidden))
+        self.h0=Variable(torch.zeros(1,n_hidden), requires_grad=False)
+        self.c0=Variable(torch.zeros(1,n_hidden), requires_grad=False)
         self.hi=[]
         self.ci=[]
-        self.fc=[]
+        fc=[]
+        lin=[]
         self.n_lstm=10
+        self.n_lin=10
         for i in range(self.n_lstm):
             self.hi.append(Variable(torch.randn(1,n_hidden)))
             self.ci.append(Variable(torch.randn(1,n_hidden)))
             if(i==0):
-                self.fc.append(nn.LSTMCell(n_input, n_hidden))
+                fc.append(nn.LSTMCell(n_input, n_hidden))
             else:
-                self.fc.append(nn.LSTMCell(n_hidden, n_hidden))
+                fc.append(nn.LSTMCell(n_hidden, n_hidden))
+        for i in range(self.n_lin):
+            if(i<self.n_lin-1):
+                lin.append(nn.Linear(n_hidden, n_hidden ))
+            else:
+                lin.append(nn.Linear(n_hidden, n_output ))
+        self.fc=ListModule(*fc)
+        self.lin=ListModule(*lin)
 
     def reinit(self):
         for i in range(self.n_lstm):
@@ -40,10 +47,9 @@ class Net(nn.Module):
     def forward(self, x):
         for i in range(self.n_lstm):
             self.hi[i], self.ci[i] =self.fc[i](x, (self.hi[i], self.ci[i]))
-            x=self.activ(self.hi[i])
-        x=self.activ(self.fc4(x))
-        x=self.activ(self.fc5(x))
-        x=self.activ(self.fc6(x))
+            x=self.ci[i]
+        for i in range(self.n_lin):
+            x=self.activ(self.lin[i](x))
         return x
         
 def finish_episode():
@@ -73,8 +79,8 @@ def simCycle():
 n_servo=8
 n_input=2*n_servo+1
 n_output=2*n_servo
-torque_int=20
-torque_int_std=20
+torque_int=15
+torque_int_std=25
         
 io=IO()
 network=Net(n_input,128, n_output)
@@ -92,4 +98,4 @@ while True:
         network.saved_actions.append(action)
         if(done==1.):
             break
-    print(finish_episode())
+    finish_episode()

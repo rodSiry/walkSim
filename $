@@ -1,6 +1,5 @@
 #include "Simulation.h"
 using namespace glm;
-using namespace std;
 mat4 getMat4(btRigidBody* body){
 	btTransform t;
 	body->getMotionState()->getWorldTransform(t);
@@ -16,12 +15,15 @@ bool Simulation::CheckFall()
 	bodies[1]->getMotionState()->getWorldTransform(t);
     btMatrix3x3 trans= t.getBasis();
 	btVector3 v=(trans.getColumn(1)).normalize();
-	scal=v.dot(btVector3(0.f, 1.f, 0.f));
+	scal=v.dot(btVector3(0.f, 1.f, 0.f)); /*  
                                               
 
+		return true;
+	else
+		return false;*/
     btVector3 pP=p;
 	p=bodies[1]->getCenterOfMassPosition();
-    if(count>1000 || p.getY()<1.)
+    if(count>1000|| p.getY()<1)
         return true;
     else 
         return false;
@@ -99,9 +101,9 @@ Simulation::Simulation():p(btVector3(0.,0.,0.)), box(Pave())
         prevState.push_back(0);
         cs[i]->setLimit(-1.5, 1.5);
     }
-        cs[1]->setLimit(-0.5, 0.5);
-        cs[5]->setLimit(-0.5, 0.5);
 
+   //     cs[1]->setLimit(-0.5, 0.5);
+    //    cs[4]->setLimit(-0.5, 0.5);
 }
 
 void Simulation::AddParr(float mass, float x, float y, float z, btVector3 p)
@@ -130,30 +132,20 @@ void Simulation::AddPlane()
 }	
 void Simulation::Draw(mat4 projection, mat4 model, mat4 view)
 {
-	double previous_p;
-	double previous_scal;
-	int n_mem=1;
 	btTransform t;
 	bodies[1]->getMotionState()->getWorldTransform(t);
-	btMatrix3x3 trans= t.getBasis();
+    btMatrix3x3 trans= t.getBasis();
 	btVector3 v=(trans.getColumn(1)).normalize();
+	btVector3 pP=p;
 	p=bodies[1]->getCenterOfMassPosition();
+	double pScal=scal;
+	double pScal=scal;
 	scal=v.dot(btVector3(0.f, 1.f, 0.f));
-	previous_p=pP.front();
-	previous_scal=pScal.front();
-	fit=(p.getY()-previous_p)+scal-previous_scal;
-
-		
+	fit=(p.getY()+scal);
 	dynamicsWorld->stepSimulation(1 / 60.f, 10);
-	pScal.push(scal);
-	pP.push(p.getY());
-	if(pP.size()>n_mem)
-		pP.pop();
-	if(pScal.size()>n_mem)
-		pScal.pop();
 	for(int i(1);i<bodies.size();i++)
 		box.Draw(1,1,1,projection, getMat4(bodies[i]), view, dimensions[i-1]);
-	count+=1;
+    count+=1;
 }
 void Simulation::AddBody(btRigidBody* b)
 {

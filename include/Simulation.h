@@ -2,6 +2,7 @@
 #define SIMULATION_H
 #include <btBulletDynamicsCommon.h>
 #include <vector>
+#include <queue>
 #include <glm/glm.hpp>
 #include <iostream>
 #include "Pave.h"
@@ -24,6 +25,8 @@ class Simulation
         double scal;
         btVector3 p;
         double fit;
+	std::queue<double> pP;
+	std::queue<double> pScal;
         btBroadphaseInterface* broadphase;
         btDefaultCollisionConfiguration* collisionConfiguration;
         btCollisionDispatcher* dispatcher;
